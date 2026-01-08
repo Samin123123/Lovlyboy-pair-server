@@ -3,163 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lovlyboy Pair</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
+<title>💗 LovlyBoy WhatsApp Pairing 💗</title>
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Inter',system-ui,sans-serif;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin:0;padding:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh;
+  background: linear-gradient(-45deg, #ffecd2, #fcb69f, #ffafbd, #ffc3a0);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
 }
-
-body{
-  height:100vh;
-  background:#0b0f1a;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#eaeaf0;
+@keyframes gradientBG {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
 }
-
-/* 🌧️ Falling particles */
-canvas{
-  position:fixed;
-  inset:0;
-  z-index:0;
-}
-
-/* 💎 Card */
-.card{
-  position:relative;
-  z-index:2;
-  width:92%;
-  max-width:420px;
-  padding:32px;
-  border-radius:18px;
-  background:rgba(20,24,45,.85);
-  box-shadow:0 20px 40px rgba(0,0,0,.5);
-  text-align:center;
-  animation:fadeUp .8s ease;
-}
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* ✨ Title */
-h1{
-  font-size:30px;
-  font-weight:800;
-  margin-bottom:8px;
-  letter-spacing:.5px;
-  color:#ffffff;
-}
-
-h1 span{
-  color:#4da3ff;
-}
-
-p{
-  font-size:14px;
-  color:#b8c0ff;
-  margin-bottom:26px;
-}
-
-/* 🚀 Buttons */
-.btn{
-  display:block;
-  width:100%;
-  padding:14px;
-  margin:12px 0;
-  border-radius:12px;
-  font-size:15px;
-  font-weight:600;
-  text-decoration:none;
-  color:white;
-  background:#1c223a;
-  border:1px solid #2a3152;
-  transition:.25s ease;
-}
-
-.btn:hover{
-  background:#4da3ff;
-  color:#0b0f1a;
-  transform:translateY(-2px);
-}
-
-.primary{
-  background:#4da3ff;
-  color:#0b0f1a;
-  border:none;
-}
-
-.primary:hover{
-  background:#6bb6ff;
-}
-
-footer{
-  margin-top:18px;
-  font-size:12px;
-  color:#7f88c5;
-}
+h1 {color:#ff4b2b; text-shadow:2px 2px #fff; margin-bottom:20px; text-align:center;}
+input {padding:12px 15px; font-size:16px; border-radius:10px; border:2px solid #ff4b2b; margin-bottom:10px; width:250px; text-align:center;}
+button {padding:12px 20px; font-size:16px; border:none; border-radius:10px; cursor:pointer; margin:5px; background:linear-gradient(45deg, #ff4b2b, #ff416c); color:white; font-weight:bold; box-shadow:0 5px 15px rgba(0,0,0,0.2); transition:transform 0.2s, box-shadow 0.2s;}
+button:hover {transform:translateY(-3px); box-shadow:0 10px 20px rgba(0,0,0,0.3);}
+#result {margin-top:20px; padding:12px; font-weight:bold; font-size:18px; color:#ff4b2b; background:rgba(255,255,255,0.8); border-radius:10px; width:300px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); word-break:break-all;}
+#qrCode {margin-top:15px; max-width:200px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
 </style>
 </head>
-
 <body>
-
-<canvas id="rain"></canvas>
-
-<div class="card">
-  <h1><span>Lovlyboy</span> Pair</h1>
-  <p>Next-Gen WhatsApp Pairing • Fast • Secure • Clean</p>
-
-  <a href="/pair" class="btn primary">⚡ Pair WhatsApp Device</a>
-  <a href="https://github.com/Samin123123" target="_blank" class="btn">
-    👑 Owner GitHub
-  </a>
-
-  <footer>© 2026 Lovlyboy Systems</footer>
+<h1>💗 LovlyBoy WhatsApp Pairing 💗</h1>
+<input type="text" id="number" placeholder="Enter WhatsApp number">
+<div>
+  <button onclick="generatePair()">Generate Pairing Code</button>
+  <button onclick="copyCode()">Copy Code</button>
 </div>
-
+<div id="result">Your Pairing Code will appear here</div>
+<img id="qrCode" src="" alt="QR Code" />
 <script>
-/* 🌧️ Particle rain (very light, no lag) */
-const canvas = document.getElementById('rain');
-const ctx = canvas.getContext('2d');
+let lastCode = "";
+async function generatePair() {
+  const number = document.getElementById('number').value.trim();
+  const result = document.getElementById('result');
+  const qrImg = document.getElementById('qrCode');
 
-function resize(){
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  if(!number) { result.innerText="❌ Please enter a number!"; qrImg.src=""; return; }
+
+  try {
+    const res = await fetch('/pair', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ number })
+    });
+    const data = await res.json();
+    if(data.success){
+      lastCode = data.code;
+      result.innerText="✅ Your Pairing Code: "+data.code;
+      qrImg.src = data.qr; // show QR code
+    } else { result.innerText="❌ Error: "+data.error; qrImg.src=""; }
+  } catch(err){ result.innerText="❌ Server error. Try again!"; qrImg.src=""; }
 }
-resize();
-addEventListener('resize', resize);
-
-const drops = Array.from({length:120},()=>({
-  x:Math.random()*innerWidth,
-  y:Math.random()*innerHeight,
-  s:Math.random()*1.5+0.5,
-  v:Math.random()*1.5+0.5
-}));
-
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='rgba(77,163,255,.6)';
-  drops.forEach(d=>{
-    ctx.fillRect(d.x,d.y,1.5,8);
-    d.y+=d.v;
-    if(d.y>canvas.height){
-      d.y=-10;
-      d.x=Math.random()*canvas.width;
-    }
-  });
-  requestAnimationFrame(draw);
+function copyCode(){
+  if(!lastCode){ alert("No code to copy! Generate first."); return; }
+  navigator.clipboard.writeText(lastCode).then(()=>{alert("✅ Pairing code copied!");});
 }
-draw();
 </script>
-
 </body>
 </html>
