@@ -1,20 +1,30 @@
 const express = require("express");
 const cors = require("cors");
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
-const Pino = require("pino");
+const fs = require("fs");
+const path = require("path");
+
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason
+} = require("@whiskeysockets/baileys");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // Serve HTML from public folder
+
+// 👉 public folder serve করবে
+app.use(express.static("public"));
 
 let sock;
 
-async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+// WhatsApp socket init
+async function initWhatsApp() {
+  const authDir = path.join(__dirname, "auth_info");
+
+  const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
   sock = makeWASocket({
-    logger: Pino({ level: "silent" }),
     auth: state,
     printQRInTerminal: false
   });
@@ -23,34 +33,61 @@ async function startBot() {
 
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect } = update;
-    if(connection === "close") {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      if(reason !== DisconnectReason.loggedOut) {
-        startBot();
+
+    if (connection === "close") {
+      const reason =
+        lastDisconnect?.error?.output?.statusCode;
+
+      if (reason !== DisconnectReason.loggedOut) {
+        initWhatsApp();
       }
     }
   });
 }
 
+initWhatsApp();
+
+// 👉 Pairing API
 app.post("/pair", async (req, res) => {
   try {
-    const number = req.body.number;
-    if(!number) return res.json({ error: "Number required" });
+    const { number } = req.body;
 
-    const code = await sock.requestPairingCode(number);
-    res.json({ success: true, code });
-  } catch(e) {
-    res.json({ success: false, error: e.message });
+    if (!number) {
+      return res.json({
+        success: false,
+        error: "Number missing"
+      });
+    }
+
+    const cleanNumber = number.replace(/[^0-9]/g, "");
+
+    if (!sock) {
+      return res.json({
+        success: false,
+        error: "WhatsApp not ready"
+      });
+    }
+
+    const code = await sock.requestPairingCode(cleanNumber);
+
+    res.json({
+      success: true,
+      code
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      error: err.message
+    });
   }
 });
 
+// Root check
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
+  res.send("LovlyBoy Pairing Server Running 🚀");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port " + PORT);
 });
-
-startBot();
