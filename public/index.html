@@ -3,169 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lovlyboy Pair Server</title>
+<title>Lovlyboy Pair</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family:'Poppins',sans-serif;
+  font-family:'Inter',system-ui,sans-serif;
 }
 
 body{
   height:100vh;
-  background: radial-gradient(circle at top, #0f0c29, #302b63, #24243e);
+  background:#0b0f1a;
   overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:white;
+  color:#eaeaf0;
 }
 
-/* 🌈 Animated background blobs */
-.bg span{
-  position:absolute;
-  width:500px;
-  height:500px;
-  background:linear-gradient(45deg,#ff00cc,#3333ff);
-  filter:blur(120px);
-  animation: float 20s infinite alternate;
-}
-.bg span:nth-child(1){top:-150px;left:-150px;}
-.bg span:nth-child(2){
-  background:linear-gradient(45deg,#00ffcc,#00c6ff);
-  bottom:-200px;right:-150px;
-  animation-delay:5s;
-}
-.bg span:nth-child(3){
-  background:linear-gradient(45deg,#ffb347,#ff416c);
-  top:50%;left:60%;
-  animation-delay:10s;
+/* 🌧️ Falling particles */
+canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
 }
 
-@keyframes float{
-  from{transform:translateY(0) translateX(0);}
-  to{transform:translateY(-80px) translateX(80px);}
-}
-
-/* 💎 Glass Card */
+/* 💎 Card */
 .card{
   position:relative;
   z-index:2;
   width:92%;
-  max-width:430px;
-  padding:35px;
-  border-radius:25px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(18px);
-  box-shadow:0 0 40px rgba(0,0,0,0.6);
+  max-width:420px;
+  padding:32px;
+  border-radius:18px;
+  background:rgba(20,24,45,.85);
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
   text-align:center;
-  animation: pop 1.2s ease;
+  animation:fadeUp .8s ease;
 }
 
-@keyframes pop{
-  from{transform:scale(0.8);opacity:0;}
-  to{transform:scale(1);opacity:1;}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
-/* ✨ Neon Title */
+/* ✨ Title */
 h1{
-  font-size:32px;
+  font-size:30px;
   font-weight:800;
-  margin-bottom:10px;
-  background:linear-gradient(90deg,#00c6ff,#ff00cc,#ffeb3b);
-  background-size:300%;
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  animation: neon 6s infinite linear;
+  margin-bottom:8px;
+  letter-spacing:.5px;
+  color:#ffffff;
 }
 
-@keyframes neon{
-  0%{background-position:0%;}
-  100%{background-position:300%;}
+h1 span{
+  color:#4da3ff;
 }
 
 p{
   font-size:14px;
-  opacity:.85;
-  margin-bottom:30px;
+  color:#b8c0ff;
+  margin-bottom:26px;
 }
 
 /* 🚀 Buttons */
 .btn{
   display:block;
-  padding:15px;
+  width:100%;
+  padding:14px;
   margin:12px 0;
-  border-radius:50px;
-  font-size:16px;
+  border-radius:12px;
+  font-size:15px;
   font-weight:600;
   text-decoration:none;
   color:white;
-  position:relative;
-  overflow:hidden;
-}
-
-.btn::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.4),transparent);
-  transform:translateX(-100%);
-}
-
-.btn:hover::before{
-  animation:shine 1s;
-}
-
-@keyframes shine{
-  to{transform:translateX(100%);}
-}
-
-.primary{
-  background:linear-gradient(90deg,#0072ff,#00c6ff);
-  box-shadow:0 0 15px #00c6ff80;
-}
-
-.success{
-  background:linear-gradient(90deg,#ff416c,#ff4b2b);
-  box-shadow:0 0 15px #ff4b2b80;
+  background:#1c223a;
+  border:1px solid #2a3152;
+  transition:.25s ease;
 }
 
 .btn:hover{
-  transform:scale(1.05);
+  background:#4da3ff;
+  color:#0b0f1a;
+  transform:translateY(-2px);
 }
 
-/* 🔻 Footer */
+.primary{
+  background:#4da3ff;
+  color:#0b0f1a;
+  border:none;
+}
+
+.primary:hover{
+  background:#6bb6ff;
+}
+
 footer{
-  margin-top:20px;
+  margin-top:18px;
   font-size:12px;
-  opacity:.6;
+  color:#7f88c5;
 }
 </style>
 </head>
 
 <body>
 
-<div class="bg">
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
+<canvas id="rain"></canvas>
 
 <div class="card">
-  <h1>Lovlyboy Pair</h1>
-  <p>2026 Ultra Secure WhatsApp Pairing System</p>
+  <h1><span>Lovlyboy</span> Pair</h1>
+  <p>Next-Gen WhatsApp Pairing • Fast • Secure • Clean</p>
 
   <a href="/pair" class="btn primary">⚡ Pair WhatsApp Device</a>
-  <a href="https://github.com/Samin123123" target="_blank" class="btn success">
+  <a href="https://github.com/Samin123123" target="_blank" class="btn">
     👑 Owner GitHub
   </a>
 
-  <footer>© 2026 Lovlyboy • Next-Gen Pair Server</footer>
+  <footer>© 2026 Lovlyboy Systems</footer>
 </div>
+
+<script>
+/* 🌧️ Particle rain (very light, no lag) */
+const canvas = document.getElementById('rain');
+const ctx = canvas.getContext('2d');
+
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener('resize', resize);
+
+const drops = Array.from({length:120},()=>({
+  x:Math.random()*innerWidth,
+  y:Math.random()*innerHeight,
+  s:Math.random()*1.5+0.5,
+  v:Math.random()*1.5+0.5
+}));
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(77,163,255,.6)';
+  drops.forEach(d=>{
+    ctx.fillRect(d.x,d.y,1.5,8);
+    d.y+=d.v;
+    if(d.y>canvas.height){
+      d.y=-10;
+      d.x=Math.random()*canvas.width;
+    }
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
 
 </body>
 </html>
