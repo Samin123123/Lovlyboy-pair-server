@@ -1,73 +1,50 @@
 const express = require("express");
 const cors = require("cors");
+const { default: makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
+const Pino = require("pino");
+const QRCode = require("qrcode");
 const path = require("path");
-
-const {
-  default: makeWASocket,
-  useMultiFileAuthState,
-} = require("@whiskeysockets/baileys");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public"))); // public folder serve
 
+// WhatsApp auth
+const { state, saveCreds } = useSingleFileAuthState("./auth_info.json");
 let sock;
-let isReady = false;
 
-async function startWhatsApp() {
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
-
+async function startSock() {
   sock = makeWASocket({
+    logger: Pino({ level: "silent" }),
     auth: state,
-    printQRInTerminal: false,
+    printQRInTerminal: false
   });
 
   sock.ev.on("creds.update", saveCreds);
-
-  sock.ev.on("connection.update", (u) => {
-    if (u.connection === "open") {
-      isReady = true;
-      console.log("✅ WhatsApp socket ready");
-    }
-    if (u.connection === "close") {
-      isReady = false;
-      startWhatsApp();
-    }
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect, qr } = update;
+    if (qr) QRCode.toDataURL(qr).then(url => currentQR = url);
+    if (connection === "close") console.log("Connection closed:", lastDisconnect.error);
   });
 }
 
-startWhatsApp();
+startSock();
 
-// 🔥 Pair endpoint (FIXED)
+// Store current QR
+let currentQR = "";
+
+// Routes
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+
 app.post("/pair", async (req, res) => {
-  try {
-    if (!isReady) {
-      return res.json({
-        success: false,
-        error: "WhatsApp not ready, wait 10–15 sec",
-      });
-    }
+  const { number } = req.body;
+  if (!number) return res.json({ success: false, error: "No number provided" });
 
-    const number = req.body.number;
-    if (!number) {
-      return res.json({ success: false, error: "Number required" });
-    }
-
-    const clean = number.replace(/\D/g, "");
-    const code = await sock.requestPairingCode(clean);
-
-    res.json({ success: true, code });
-  } catch (e) {
-    res.json({ success: false, error: e.message });
-  }
+  // Generate simple section ID
+  const sectionID = "LB-" + Math.floor(Math.random() * 900000 + 100000); 
+  res.json({ success: true, code: sectionID, qr: currentQR });
 });
 
-app.get("/", (_, res) => {
-  res.send("LovlyBoy Pair Server Running 🚀");
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () =>
-  console.log("Server running on " + PORT)
-);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
