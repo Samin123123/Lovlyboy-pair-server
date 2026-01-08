@@ -1,104 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lovlyboy Pair Server</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lovlyboy Pair Server</title>
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
 
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
 
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      padding: 30px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 0 30px rgba(0,0,0,0.4);
-      animation: fadeIn 1.2s ease;
-    }
+body{
+  height:100vh;
+  background: radial-gradient(circle at top, #0f0c29, #302b63, #24243e);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+}
 
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(20px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
+/* 🌈 Animated background blobs */
+.bg span{
+  position:absolute;
+  width:500px;
+  height:500px;
+  background:linear-gradient(45deg,#ff00cc,#3333ff);
+  filter:blur(120px);
+  animation: float 20s infinite alternate;
+}
+.bg span:nth-child(1){top:-150px;left:-150px;}
+.bg span:nth-child(2){
+  background:linear-gradient(45deg,#00ffcc,#00c6ff);
+  bottom:-200px;right:-150px;
+  animation-delay:5s;
+}
+.bg span:nth-child(3){
+  background:linear-gradient(45deg,#ffb347,#ff416c);
+  top:50%;left:60%;
+  animation-delay:10s;
+}
 
-    h1 {
-      margin-bottom: 10px;
-      font-size: 28px;
-      background: linear-gradient(90deg, #ff6a00, #ee0979);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+@keyframes float{
+  from{transform:translateY(0) translateX(0);}
+  to{transform:translateY(-80px) translateX(80px);}
+}
 
-    p {
-      font-size: 14px;
-      opacity: 0.85;
-      margin-bottom: 25px;
-    }
+/* 💎 Glass Card */
+.card{
+  position:relative;
+  z-index:2;
+  width:92%;
+  max-width:430px;
+  padding:35px;
+  border-radius:25px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(18px);
+  box-shadow:0 0 40px rgba(0,0,0,0.6);
+  text-align:center;
+  animation: pop 1.2s ease;
+}
 
-    .btn {
-      display: block;
-      margin: 12px 0;
-      padding: 14px;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: bold;
-      text-decoration: none;
-      color: white;
-      transition: 0.3s;
-    }
+@keyframes pop{
+  from{transform:scale(0.8);opacity:0;}
+  to{transform:scale(1);opacity:1;}
+}
 
-    .btn.primary {
-      background: linear-gradient(90deg, #00c6ff, #0072ff);
-    }
+/* ✨ Neon Title */
+h1{
+  font-size:32px;
+  font-weight:800;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#00c6ff,#ff00cc,#ffeb3b);
+  background-size:300%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation: neon 6s infinite linear;
+}
 
-    .btn.success {
-      background: linear-gradient(90deg, #11998e, #38ef7d);
-    }
+@keyframes neon{
+  0%{background-position:0%;}
+  100%{background-position:300%;}
+}
 
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(255,255,255,0.3);
-    }
+p{
+  font-size:14px;
+  opacity:.85;
+  margin-bottom:30px;
+}
 
-    footer {
-      margin-top: 20px;
-      font-size: 12px;
-      opacity: 0.6;
-    }
-  </style>
+/* 🚀 Buttons */
+.btn{
+  display:block;
+  padding:15px;
+  margin:12px 0;
+  border-radius:50px;
+  font-size:16px;
+  font-weight:600;
+  text-decoration:none;
+  color:white;
+  position:relative;
+  overflow:hidden;
+}
+
+.btn::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.4),transparent);
+  transform:translateX(-100%);
+}
+
+.btn:hover::before{
+  animation:shine 1s;
+}
+
+@keyframes shine{
+  to{transform:translateX(100%);}
+}
+
+.primary{
+  background:linear-gradient(90deg,#0072ff,#00c6ff);
+  box-shadow:0 0 15px #00c6ff80;
+}
+
+.success{
+  background:linear-gradient(90deg,#ff416c,#ff4b2b);
+  box-shadow:0 0 15px #ff4b2b80;
+}
+
+.btn:hover{
+  transform:scale(1.05);
+}
+
+/* 🔻 Footer */
+footer{
+  margin-top:20px;
+  font-size:12px;
+  opacity:.6;
+}
+</style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>Lovlyboy Pair Server</h1>
-    <p>Fast • Secure • Modern Pairing System</p>
 
-    <a href="/pair" class="btn primary">🔗 Pair Device</a>
-    <a href="https://github.com/Samin123123" target="_blank" class="btn success">
-      💻 GitHub Profile
-    </a>
+<div class="bg">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
 
-    <footer>
-      © 2026 Lovlyboy • Powered by Render
-    </footer>
-  </div>
+<div class="card">
+  <h1>Lovlyboy Pair</h1>
+  <p>2026 Ultra Secure WhatsApp Pairing System</p>
+
+  <a href="/pair" class="btn primary">⚡ Pair WhatsApp Device</a>
+  <a href="https://github.com/Samin123123" target="_blank" class="btn success">
+    👑 Owner GitHub
+  </a>
+
+  <footer>© 2026 Lovlyboy • Next-Gen Pair Server</footer>
+</div>
+
 </body>
 </html>
