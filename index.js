@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const QRCode = require("qrcode");
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
@@ -19,9 +21,18 @@ const ownerInfo = {
 
 // Start WhatsApp Bot
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("./session");
+  const authPath = path.join("/tmp", "baileys-session");
 
-  const sock = makeWASocket({ auth: state, printQRInTerminal: true });
+  if (!fs.existsSync(authPath)) {
+    fs.mkdirSync(authPath, { recursive: true });
+  }
+
+  const { state, saveCreds } = await useMultiFileAuthState(authPath);
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true
+  });
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -35,14 +46,16 @@ async function startBot() {
 
     if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode;
-      if (reason !== DisconnectReason.loggedOut) startBot();
+      if (reason !== DisconnectReason.loggedOut) {
+        startBot();
+      }
     }
 
     if (connection === "open") {
       console.log("🎉 WhatsApp Connected Successfully");
     }
   });
-}
+    }
 
 startBot();
 
