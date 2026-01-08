@@ -1,48 +1,71 @@
 const express = require("express");
-const cors = require("cors");
-const path = require("path");
 const QRCode = require("qrcode");
-const { default: makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
 
-const { state, saveCreds } = useSingleFileAuthState("./auth_info.json");
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason
+} = require("@whiskeysockets/baileys");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+const PORT = process.env.PORT || 3000;
 
-const sock = makeWASocket({
+let latestQR = "WAITING_FOR_QR";
+
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+
+  const sock = makeWASocket({
     auth: state,
     printQRInTerminal: true
-});
+  });
 
-sock.ev.on("creds.update", saveCreds);
+  sock.ev.on("creds.update", saveCreds);
 
-// Root page
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
+  sock.ev.on("connection.update", (update) => {
+    const { connection, qr, lastDisconnect } = update;
 
-// Generate pairing code
-app.post("/pair", async (req, res) => {
-  const { number } = req.body;
-  if(!number) return res.json({ success: false, error: "No number provided" });
+    if (qr) {
+      latestQR = qr;
+      console.log("✅ New QR generated");
+    }
 
-  try {
-    // Generate QR code image data
-    const qrData = "https://wa.me/" + number; // উদাহরণ
-    const qrImageUrl = await QRCode.toDataURL(qrData);
+    if (connection === "close") {
+      const reason =
+        lastDisconnect?.error?.output?.statusCode;
 
-    // Generate a random section ID
-    const sectionID = "LB-" + Math.floor(100000 + Math.random() * 900000);
+      if (reason !== DisconnectReason.loggedOut) {
+        console.log("🔄 Reconnecting...");
+        startBot();
+      }
+    }
 
-    res.json({ success: true, code: qrImageUrl, section: sectionID });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
+    if (connection === "open") {
+      console.log("🎉 WhatsApp Connected Successfully");
+    }
+  });
+}
+
+startBot();
+
+app.get("/", async (req, res) => {
+  if (latestQR === "WAITING_FOR_QR") {
+    return res.send("⏳ QR generating, wait...");
   }
+
+  const qrImage = await QRCode.toDataURL(latestQR);
+  res.send(`
+    <html>
+      <head>
+        <title>Lovlyboy QR</title>
+      </head>
+      <body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;">
+        <img src="${qrImage}" />
+      </body>
+    </html>
+  `);
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("🌐 Server running on port", PORT);
 });
