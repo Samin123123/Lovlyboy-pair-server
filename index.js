@@ -19,7 +19,7 @@ const ownerInfo = {
 
 // Start WhatsApp Bot
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("./auth");
+  const { state, saveCreds } = await useMultiFileAuthState("./session");
 
   const sock = makeWASocket({ auth: state, printQRInTerminal: true });
 
