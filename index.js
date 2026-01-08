@@ -1,93 +1,73 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
 const path = require("path");
 
 const {
   default: makeWASocket,
   useMultiFileAuthState,
-  DisconnectReason
 } = require("@whiskeysockets/baileys");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// 👉 public folder serve করবে
 app.use(express.static("public"));
 
 let sock;
+let isReady = false;
 
-// WhatsApp socket init
-async function initWhatsApp() {
-  const authDir = path.join(__dirname, "auth_info");
-
-  const { state, saveCreds } = await useMultiFileAuthState(authDir);
+async function startWhatsApp() {
+  const { state, saveCreds } = await useMultiFileAuthState("./auth");
 
   sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false
+    printQRInTerminal: false,
   });
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect } = update;
-
-    if (connection === "close") {
-      const reason =
-        lastDisconnect?.error?.output?.statusCode;
-
-      if (reason !== DisconnectReason.loggedOut) {
-        initWhatsApp();
-      }
+  sock.ev.on("connection.update", (u) => {
+    if (u.connection === "open") {
+      isReady = true;
+      console.log("✅ WhatsApp socket ready");
+    }
+    if (u.connection === "close") {
+      isReady = false;
+      startWhatsApp();
     }
   });
 }
 
-initWhatsApp();
+startWhatsApp();
 
-// 👉 Pairing API
+// 🔥 Pair endpoint (FIXED)
 app.post("/pair", async (req, res) => {
   try {
-    const { number } = req.body;
+    if (!isReady) {
+      return res.json({
+        success: false,
+        error: "WhatsApp not ready, wait 10–15 sec",
+      });
+    }
 
+    const number = req.body.number;
     if (!number) {
-      return res.json({
-        success: false,
-        error: "Number missing"
-      });
+      return res.json({ success: false, error: "Number required" });
     }
 
-    const cleanNumber = number.replace(/[^0-9]/g, "");
+    const clean = number.replace(/\D/g, "");
+    const code = await sock.requestPairingCode(clean);
 
-    if (!sock) {
-      return res.json({
-        success: false,
-        error: "WhatsApp not ready"
-      });
-    }
-
-    const code = await sock.requestPairingCode(cleanNumber);
-
-    res.json({
-      success: true,
-      code
-    });
-  } catch (err) {
-    res.json({
-      success: false,
-      error: err.message
-    });
+    res.json({ success: true, code });
+  } catch (e) {
+    res.json({ success: false, error: e.message });
   }
 });
 
-// Root check
-app.get("/", (req, res) => {
-  res.send("LovlyBoy Pairing Server Running 🚀");
+app.get("/", (_, res) => {
+  res.send("LovlyBoy Pair Server Running 🚀");
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT, () =>
+  console.log("Server running on " + PORT)
+);
