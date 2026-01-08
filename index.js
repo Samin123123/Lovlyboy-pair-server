@@ -1,50 +1,48 @@
 const express = require("express");
 const cors = require("cors");
-const { default: makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
-const Pino = require("pino");
-const QRCode = require("qrcode");
 const path = require("path");
+const QRCode = require("qrcode");
+const { default: makeWASocket, useSingleFileAuthState } = require("@whiskeysockets/baileys");
+
+const { state, saveCreds } = useSingleFileAuthState("./auth_info.json");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // public folder serve
+app.use(express.static(path.join(__dirname, "public")));
 
-// WhatsApp auth
-const { state, saveCreds } = useSingleFileAuthState("./auth_info.json");
-let sock;
-
-async function startSock() {
-  sock = makeWASocket({
-    logger: Pino({ level: "silent" }),
+const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false
-  });
+    printQRInTerminal: true
+});
 
-  sock.ev.on("creds.update", saveCreds);
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
-    if (qr) QRCode.toDataURL(qr).then(url => currentQR = url);
-    if (connection === "close") console.log("Connection closed:", lastDisconnect.error);
-  });
-}
+sock.ev.on("creds.update", saveCreds);
 
-startSock();
+// Root page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
 
-// Store current QR
-let currentQR = "";
-
-// Routes
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-
+// Generate pairing code
 app.post("/pair", async (req, res) => {
   const { number } = req.body;
-  if (!number) return res.json({ success: false, error: "No number provided" });
+  if(!number) return res.json({ success: false, error: "No number provided" });
 
-  // Generate simple section ID
-  const sectionID = "LB-" + Math.floor(Math.random() * 900000 + 100000); 
-  res.json({ success: true, code: sectionID, qr: currentQR });
+  try {
+    // Generate QR code image data
+    const qrData = "https://wa.me/" + number; // উদাহরণ
+    const qrImageUrl = await QRCode.toDataURL(qrData);
+
+    // Generate a random section ID
+    const sectionID = "LB-" + Math.floor(100000 + Math.random() * 900000);
+
+    res.json({ success: true, code: qrImageUrl, section: sectionID });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
