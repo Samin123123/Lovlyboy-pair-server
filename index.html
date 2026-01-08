@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #ffecd2, #fcb69f);
+      background: linear-gradient(120deg, #ff9a9e 0%, #fad0c4 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -15,13 +15,28 @@
       min-height: 100vh;
       margin: 0;
       padding: 20px;
+      animation: bgMove 10s ease infinite;
     }
+
+    @keyframes bgMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     h1 {
       color: #ff4b2b;
       text-shadow: 2px 2px #fff;
       margin-bottom: 20px;
-      font-size: 2em;
+      font-size: 2.5em;
+      animation: glow 1.5s ease-in-out infinite alternate;
     }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #ff4b2b, 0 0 10px #ff416c; }
+      to { text-shadow: 0 0 20px #ff4b2b, 0 0 30px #ff416c; }
+    }
+
     input {
       padding: 12px 15px;
       font-size: 16px;
@@ -31,6 +46,7 @@
       width: 250px;
       text-align: center;
     }
+
     button {
       padding: 12px 20px;
       font-size: 16px;
@@ -44,10 +60,12 @@
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       transition: transform 0.2s, box-shadow 0.2s;
     }
+
     button:hover {
       transform: translateY(-3px);
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
+
     #result {
       margin-top: 20px;
       padding: 12px;
@@ -61,6 +79,16 @@
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
       word-break: break-all;
     }
+
+    #qrImg {
+      margin-top: 15px;
+      width: 200px;
+      height: 200px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
@@ -71,6 +99,7 @@
     <button onclick="copyCode()">Copy Code</button>
   </div>
   <div id="result">Your Pairing Code will appear here</div>
+  <img id="qrImg" src="" alt="QR Code" />
 
   <script>
     let lastCode = "";
@@ -78,9 +107,11 @@
     async function generatePair() {
       const number = document.getElementById('number').value.trim();
       const result = document.getElementById('result');
+      const qrImg = document.getElementById('qrImg');
 
       if(!number) {
         result.innerText = "❌ Please enter a number!";
+        qrImg.src = "";
         return;
       }
 
@@ -95,11 +126,14 @@
         if(data.success) {
           lastCode = data.code;
           result.innerText = "✅ Your Pairing Code: " + data.code;
+          qrImg.src = data.qr;
         } else {
           result.innerText = "❌ Error: " + data.error;
+          qrImg.src = "";
         }
       } catch(err) {
         result.innerText = "❌ Server error. Try again!";
+        qrImg.src = "";
       }
     }
 
